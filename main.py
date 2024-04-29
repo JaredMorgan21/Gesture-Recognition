@@ -1,12 +1,17 @@
 import cv2
 import numpy as np
+import torch
+from torchvision.models import resnet152, resnet50, resnet18, vit_b_16
+import torchvision.transforms as transforms
 
 # net = cv2.dnn.readNetFromONNX("model.onnx") # shallow cnn
 # net = cv2.dnn.readNetFromONNX("resnet18.onnx")
 # net = cv2.dnn.readNetFromONNX("resnet50.onnx")
-net = cv2.dnn.readNetFromONNX("resnet152.onnx")
+# net = cv2.dnn.readNetFromONNX("resnet152.onnx")
 # net = cv2.dnn.readNetFromONNX("vit_b_16.onnx")
-
+net = vit_b_16()
+net.load_state_dict(torch.load('vit_b_16.pth'))
+net.eval()
 
 cap = cv2.VideoCapture(0)
 
@@ -16,8 +21,8 @@ while True:
     # input_frame = cv2.resize(frame, (132, 132)) # shallow cnn
     input_frame = cv2.resize(frame, (224, 224)) #resnet
 
-    lowerHSV = np.array([0, 17, 0])
-    upperHSV = np.array([44, 170, 241])
+    lowerHSV = np.array([0, 0, 43])
+    upperHSV = np.array([43, 147, 103])
     hsv = cv2.cvtColor(input_frame, cv2.COLOR_BGR2HSV)
     mask = cv2.inRange(hsv, lowerHSV, upperHSV)
 
@@ -31,8 +36,17 @@ while True:
     # print(np.array(blob).shape)
     cv2.imshow("gray", input_gray_3channel)
 
-    net.setInput(blob)
-    preds = net.forward()
+    # net.setInput(blob)
+    # preds = net.forward()
+
+    transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Resize([224, 224]),
+    ])
+    blob_tensor = transform(input_gray_3channel)
+    preds = net(blob_tensor[None, ...])
+    preds = preds.detach().numpy()
+
     biggest_pred_index = np.array(preds)[0].argmax()
     confidence = np.array(preds)[0].max()
     # print(preds)
