@@ -3,6 +3,7 @@ from torch import nn
 from torch.utils.data import random_split, DataLoader
 from torchvision.models import resnet152, resnet50, resnet18, vit_b_16
 from torchvision.transforms import v2
+from torchvision import datasets, transforms
 
 from MakeDatasetAnnotationsFile import idxs_to_class_names
 from TrainResnet152 import CustomGestureDataset, test
@@ -22,7 +23,10 @@ model_choices = [
 ]
 
 labels_file = 'labels_file'
-dataset = CustomGestureDataset(labels_file)
+transform = transforms.Compose([
+    transforms.Resize([224, 224]),
+])
+dataset = CustomGestureDataset(labels_file, transform=transform)
 
 generator1 = torch.Generator().manual_seed(42)
 
